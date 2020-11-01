@@ -1,0 +1,191 @@
+---
+title: "HW#8"
+author: "Zijian Huang"
+date: "10/30/2020"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+---
+
+# 5.3.3
+
+### 1
+
+The SDE $dr(t) = \alpha(b-r(t))dt + σdW (t)$, is transformed via Ito-formula with the auxiliary function $f(r,t)=re^{\alpha t}$ to the SDE. By chain rule we have:
+$$
+\begin{aligned}
+d(r(t)e^{\alpha t})
+&= e^{\alpha t}dr(t)+\alpha e^{\alpha t}r(t)dt \\
+&= e^{\alpha t}\alpha(b-r(t))dt+\sigma e^{\alpha t}dW(t)+\alpha e^{\alpha t}r(t)dt \\
+&=e^{\alpha t}\alpha bdt+\sigma e^{\alpha t}dW(t)
+\end{aligned}
+$$
+
+Then integrate from t to $t+\Delta$:
+
+$$
+r(t)e^{\alpha t}=r(0)+\int_0^{t}e^{\alpha s}\alpha bds + \int_0^{t}\sigma e^{\alpha s}dW(s)
+$$
+$$
+r(t+\Delta)e^{\alpha(t+\Delta)}=r(0) +\int_0^{t+\Delta}e^{-\alpha s}\alpha bds+\sigma\int_0^{t+\Delta}e^{\alpha s}dW(s)
+$$
+
+Then subtract the above two equations, we get:
+
+$$
+r(t+\Delta)=r(t) e^{-\alpha \Delta}+b(1-e^{-\alpha\Delta})+\sigma\int_t^{t+\Delta}e^{-\alpha(t+\Delta-s)}dW(s)
+$$
+
+Because $W(t+\Delta)-W(t)\sim N(0,\Delta)$, by Ito isometry, we can get the variance.
+$$E[(\int_t^{t+\Delta}e^{-\alpha(t+\Delta -s)}dW(s))^2]=E[\int_t^{t+\Delta}e^{-2\alpha(t+\Delta -s)}ds]= \frac{1-e^{-2\alpha\Delta}}{2\alpha}$$
+Thus, 
+$$\int_t^{t+\Delta}e^{-\alpha(t+\Delta-s)}dW(s) \sim N(0,\frac{1-e^{-2\alpha\Delta}}{2\alpha})$$
+To sum up, we have:
+$$r(t+\Delta)=e^{-\alpha \Delta}r(t)+b(1-e^{-\alpha\Delta})+\frac{\sigma}{\sqrt{1-e^{-2\alpha\Delta}}}Z$$
+Where $Z\sim N(0,1)$
+
+
+### 2
+
+```{r, warning = FALSE, message = FALSE}
+set.seed(123)
+orstein <- function(alpha, sigma, b, r0=1, t=500, delta=1/500) {
+  n <- t/delta
+  r <- rep(r0, (n + 1))
+  for(i in 1:n) {
+    r[i+1] <- exp(-alpha * delta) * r[i] + b * (1 - exp(-alpha * delta)) +
+      sigma * sqrt((1 - exp(-2 * alpha * delta)) / (2 * alpha)) * rnorm(1)
+  }
+  return(r)
+}
+a <- c(0.1, 1, 5)
+sigma <- c(0.1, 0.2, 0.5)
+b <- c(-5, 5)
+
+# b=-5, sigma=0.1
+mat1 <- sapply(a, orstein, sigma=0.1, b=-5)
+plot(ts(mat1[, 1], frequency=500),type='l', 
+     ylab='', main= expression(paste("Sampled values, ", b, "=-5, ", sigma,
+    "=0.1")), col=1)
+lines(ts(mat1[, 2], frequency=500), type='l', col=2)
+lines(ts(mat1[, 3], frequency=500), type='l', col=3)
+legend("topright", legend=c('0.1, 0.1', '1, 0.1', '5, 0.1'),
+lty=c(1,1), col=c(1, 2, 3), title=expression(paste(alpha , ", ", sigma)))
+# b=-5, sigma=0.2
+mat2 <- sapply(a, orstein, sigma=0.2, b=-5)
+plot(ts(mat2[, 1], frequency=500),type='l', 
+     ylab='', main= expression(paste("Sampled values, ", b, "=-5, ", sigma,
+    "=0.2")), col=4)
+lines(ts(mat2[, 2], frequency=500), type='l', col=5)
+lines(ts(mat2[, 3], frequency=500), type='l', col=6)
+legend("topright", legend=c('0.1, 0.2', '1, 0.2', '5, 0.2'),
+lty=c(1,1), col=c(4, 5, 6), title=expression(paste(alpha , ", ", sigma)))
+# b=-5, sigma=0.5
+mat3 <- sapply(a, orstein, sigma=0.5, b=-5)
+plot(ts(mat3[, 1], frequency=500),type='l', 
+     ylab='', main= expression(paste("Sampled values, ", b, "=-5, ", sigma,
+    "=0.1")), col=7)
+lines(ts(mat3[, 2], frequency=500), type='l', col=8)
+lines(ts(mat3[, 3], frequency=500), type='l', col=9)
+legend("topright", legend=c('0.1, 0.5', '1, 0.5', '5, 0.5'),
+lty=c(1,1), col=c(7, 8, 9), title=expression(paste(alpha , ", ", sigma)))
+
+# b=5, sigma=0.1
+mat1 <- sapply(a, orstein, sigma=0.1, b=5)
+plot(ts(mat1[, 1], frequency=500),type='l', 
+     ylab='', main= expression(paste("Sampled values, ", b, "=5, ", sigma,
+    "=0.1")), col=1)
+lines(ts(mat1[, 2], frequency=500), type='l', col=2)
+lines(ts(mat1[, 3], frequency=500), type='l', col=3)
+legend("topright", legend=c('0.1, 0.1', '1, 0.1', '5, 0.1'),
+lty=c(1,1), col=c(1, 2, 3), title=expression(paste(alpha , ", ", sigma)))
+# b=5, sigma=0.2
+mat2 <- sapply(a, orstein, sigma=0.2, b=5)
+plot(ts(mat2[, 1], frequency=500),type='l', 
+     ylab='', main= expression(paste("Sampled values, ", b, "=5, ", sigma,
+    "=0.2")), col=4)
+lines(ts(mat2[, 2], frequency=500), type='l', col=5)
+lines(ts(mat2[, 3], frequency=500), type='l', col=6)
+legend("topright", legend=c('0.1, 0.2', '1, 0.2', '5, 0.2'),
+lty=c(1,1), col=c(4, 5, 6), title=expression(paste(alpha , ", ", sigma)))
+# b=5, sigma=0.5
+mat3 <- sapply(a, orstein, sigma=0.5, b=5)
+plot(ts(mat3[, 1], frequency=500),type='l', 
+     ylab='', main= expression(paste("Sampled values, ", b, "=5, ", sigma,
+    "=0.1")), col=7)
+lines(ts(mat3[, 2], frequency=500), type='l', col=8)
+lines(ts(mat3[, 3], frequency=500), type='l', col=9)
+legend("topright", legend=c('0.1, 0.5', '1, 0.5', '5, 0.5'),
+lty=c(1,1), col=c(7, 8, 9), title=expression(paste(alpha , ", ", sigma)))
+
+```
+
+Thus, from the above plots, we realized that as $\sigma$ increase, the lines seems to spread out. Under the same $\sigma$, as $\alpha$ increase, it seems converge to b faster and without extra fluctuation. The Ornstein–Uhlenbeck process is a stationary Gauss–Markov process, which means that it is a Gaussian process, a Markov process, and is temporally homogeneous. Over time, the process tends to drift towards its mean function: such a process is called mean-reverting.
+
+
+### 3
+
+```{r, warning = FALSE, message = FALSE}
+set.seed(123)
+ornstein_euler <- function(delta, alpha, sigma, b, r0){
+  n <- 1/delta
+  r <- matrix(r0, 1000, n + 1)
+  for (i in 1:1000){
+    for (j in 2:(n+1)) {
+    r[i, j]  <-  r[i, j-1] + alpha * (b - r[i, j-1]) * delta + 
+      sigma * delta * rnorm(1)
+    }
+  }
+  return(r);
+}
+
+a <- 0.1
+sigma <- 0.1
+b <- 5
+r0 <- 5
+
+delta <- c(1, 0.5, 0.1, 0.01)
+test <- sapply(delta, ornstein_euler, a, sigma, b, r0)
+
+true <- function (x, delta) {
+  mu <- exp(-a * delta) * r0 + b * (1 - exp(-a * delta))
+  sig <- sigma * sqrt((1 - exp(-2 * a * delta)) / (2 * a))
+  exp(-((x-mu)^2) /(2*sig^2)) / sqrt(2*pi*sig^2)
+}
+
+# plot delta=1
+hist((test[[1]])[,ncol(test[[1]])], freq = F, ylim = c(0, 5), xlab = '', 
+     main = expression(paste(delta, "=1")))
+lines(density((test[[1]])[,ncol(test[[1]])]), col = 1, lwd = 1)
+curve(true(x, 1), add = T, col = 2)
+legend('topleft', legend = c("simulation","true"),
+       lty = c(1, 1), lwd = c(1, 1), col = 1:2)
+# plot delta=0.5
+hist((test[[2]])[,ncol(test[[2]])], freq = F, ylim = c(0, 6), xlab = '', 
+     main = expression(paste(delta, "=0.5")))
+lines(density((test[[2]])[,ncol(test[[2]])]), col = 1, lwd = 1)
+curve(true(x, 1), add = T, col = 2)
+legend('topleft', legend = c("simulation","true"),
+       lty = c(1, 1), lwd = c(1, 1), col = 1:2)
+# plot delta=0.1
+hist((test[[3]])[,ncol(test[[3]])], freq = F, ylim = c(0, 12.8), xlab = '', 
+     main = expression(paste(delta, "=0.1")))
+lines(density((test[[3]])[,ncol(test[[3]])]), col = 1, lwd = 1)
+curve(true(x, 1), add = T, col = 2)
+legend('topleft', legend = c("simulation","true"),
+       lty = c(1, 1), lwd = c(1, 1), col = 1:2)
+# plot delta=0.01
+hist((test[[4]])[,ncol(test[[4]])], freq = F, xlab = '', 
+     main = expression(paste(delta, "=0.01")))
+lines(density((test[[4]])[,ncol(test[[4]])]), col = 1, lwd = 1)
+curve(true(x, 1), add = T, col = 2)
+legend('topleft', legend = c("simulation","true"),
+       lty = c(1, 1), lwd = c(1, 1), col = 1:2)
+
+```
+
+
+
+
+
+

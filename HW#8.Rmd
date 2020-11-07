@@ -186,6 +186,79 @@ legend('topleft', legend = c("simulation","true"),
 
 
 
+# 5.3.4
+
+
+### 1
+
+Since it is poisson process, then $N(5)\sim poisson(Z)$. 
+
+$$
+\begin{aligned}
+Z=\int_0^5\lambda(t) &= \int_0^5 (\sqrt{t} + e^{-t} \sin(2 \pi t))dt \\
+&= \int_0^5 \sqrt{t}dt - \frac{e^{-t}}{2\pi}\cos(2\pi t)|_0^5 - \int_0^5\frac{e^{-t}}{2\pi}\cos(2\pi t)dt \\
+&= \frac{2}{3}\times5^{\frac{3}{2}} - \frac{e^{-t}}{2\pi}\cos(2\pi t)|_0^5 - \frac{e^{-t}}{(2\pi)^2}\sin(2\pi t)|_0^5 - \int_0^5\frac{e^{-t}}{(2\pi)^2}\sin(2\pi t)dt \\
+&= \frac{2}{3}\times5^{\frac{3}{2}} + \frac{(2\pi)^2}{1+(2\pi)^2}(\frac{1}{2\pi}-\frac{e^{-5}}{2\pi}) \\
+&= \frac{2}{3}\times5^{\frac{3}{2}} + \frac{(2\pi)(1-e^{-5})}{1+(2\pi)^2}
+\end{aligned}
+$$
+
+
+### 2
+
+```{r, warning = FALSE, message = FALSE}
+# Since lambda(t) is complicated 
+# Using "thinning method", similar to rejection sampling
+# Let lambda_0(t) = lambda(5)
+# Define envelope lambda_0(t)
+lambda_0 <- sqrt(5) + exp(-5) * sin(2 * pi * 5) 
+# Define the lambda(t) function
+lambda <- function(t) {
+  sqrt(t) + exp(-t) * sin(2 * pi * t)
+}
+
+pp_sim <- function(n) {
+# return time
+  y <- c()
+  for(i in 1:n) {
+    n <- rpois(1, lambda_0 * 5)  
+    if (n > 0) {
+      tau = 5 * sort(runif(n)) 
+      for (i in 1:length(tau)) {
+        t <- tau[i]
+        if( lambda(t) / lambda_0 > runif(1))
+          y = c(y,t) 
+      }
+    }
+  }
+  return(y) 
+}
+```
+
+
+
+### 3
+
+```{r, warning = FALSE, message = FALSE}
+sim <- pp_sim(1000)
+true.den <- function(t) {
+  (sqrt(t) + exp(-t)*sin(2*pi*t)) / (2*5^(1.5)/3 + 2*pi*(1-exp(-5))/(1+4*(pi^2)))
+}
+
+hist(sim, freq = F, ylim = c(0, 0.4), xlim = c(0, 5), xlab = 'time', main = '') 
+lines(density(sim), xlim = c(0,5), col = 1)
+curve(true.den, 0, 5, add = TRUE, col = 2)
+legend('topright', legend = c("simulated","true"), lty = c(1,1), col=1:2)
+```
+
+
+
+
+
+
+
+
+
 
 
 
